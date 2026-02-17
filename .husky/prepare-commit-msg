@@ -1,0 +1,84 @@
+#!/usr/bin/env sh
+
+# Auto-prefix commit messages based on branch name
+# Branch: feat/user-auth  →  🔥 feat:
+# Branch: bug/login-fix   →  🐛 bug:
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Skip if commit message already has emoji prefix or is a merge/amend
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ]; then
+  exit 0
+fi
+
+# Get current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+# Skip if not on a branch (detached HEAD)
+if [ -z "$BRANCH_NAME" ]; then
+  exit 0
+fi
+
+# Get current commit message
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip if message already starts with emoji
+if echo "$COMMIT_MSG" | grep -qE "^[🔥🐛⚡🧹📚♻️🚨✅🔧🗑️🚀💄]"; then
+  exit 0
+fi
+
+# Skip if message already has conventional format
+if echo "$COMMIT_MSG" | grep -qE "^(feat|bug|fix|perf|chore|docs|refactor|hotfix|test|config|remove|deploy|style):"; then
+  exit 0
+fi
+
+# Extract prefix from branch name (e.g., feat/user-auth -> feat)
+BRANCH_PREFIX=$(echo "$BRANCH_NAME" | sed -E 's/^([a-z]+)[\/\-].*/\1/')
+
+# Map branch prefix to emoji and type
+case "$BRANCH_PREFIX" in
+  feat|feature)
+    PREFIX="🔥 feat: "
+    ;;
+  bug|fix|bugfix)
+    PREFIX="🐛 bug: "
+    ;;
+  hotfix)
+    PREFIX="🚨 hotfix: "
+    ;;
+  perf|performance)
+    PREFIX="⚡ perf: "
+    ;;
+  chore|maintenance)
+    PREFIX="🧹 chore: "
+    ;;
+  docs|doc|documentation)
+    PREFIX="📚 docs: "
+    ;;
+  refactor)
+    PREFIX="♻️ refactor: "
+    ;;
+  test|tests)
+    PREFIX="✅ test: "
+    ;;
+  config)
+    PREFIX="🔧 config: "
+    ;;
+  style)
+    PREFIX="💄 style: "
+    ;;
+  deploy|release)
+    PREFIX="🚀 deploy: "
+    ;;
+  remove|delete)
+    PREFIX="🗑️ remove: "
+    ;;
+  *)
+    # No matching prefix, exit without modifying
+    exit 0
+    ;;
+esac
+
+# Prepend the prefix to the commit message
+echo "${PREFIX}${COMMIT_MSG}" > "$COMMIT_MSG_FILE"

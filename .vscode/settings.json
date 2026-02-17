@@ -1,0 +1,199 @@
+{
+  // Editor Settings
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "on",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.suggestSelection": "first",
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+
+  // TypeScript Settings
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.quoteStyle": "single",
+
+  // JavaScript Settings
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.autoImports": true,
+  "javascript.preferences.quoteStyle": "single",
+
+  // Files Settings
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/coverage": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true
+  },
+
+  // Search Settings
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.next": true,
+    "pnpm-lock.yaml": true,
+    "package-lock.json": true
+  },
+
+  // Prettier Settings
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all",
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+  "prettier.arrowParens": "always",
+  "prettier.endOfLine": "lf",
+
+  // ESLint Settings
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.codeActionsOnSave.mode": "all",
+
+  // Git Settings
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+
+  // Explorer Settings
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.compactFolders": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.js, ${capture}.d.ts, ${capture}.spec.ts, ${capture}.test.ts",
+    "*.tsx": "${capture}.ts, ${capture}.spec.tsx, ${capture}.test.tsx",
+    "*.entity.ts": "${capture}.entity.spec.ts, ${capture}.repository.ts",
+    "*.controller.ts": "${capture}.controller.spec.ts",
+    "*.service.ts": "${capture}.service.spec.ts",
+    "*.module.ts": "${capture}.module.spec.ts",
+    "package.json": "package-lock.json, pnpm-lock.yaml, yarn.lock, .npmrc, .nvmrc, .node-version, .pnpmfile.cjs",
+    "tsconfig.json": "tsconfig.*.json",
+    "docker-compose.yml": "docker-compose.dev.yml, Dockerfile, .dockerignore",
+    ".env": ".env.local, .env.development, .env.production, .env.test, .env.example, .env.development.local, .env.production.local, .env.test.local",
+    ".gitignore": ".gitattributes, .gitmodules, .gitmoji.json, .mailmap",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE, SECURITY.md",
+    "AGENTS.md": "CLAUDE.md, GEMINI.md",
+    ".prettierrc": ".prettierignore, .editorconfig",
+    "commitlint.config.js": ".commitlintrc*, .husky",
+  },
+
+  // Terminal Settings
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.scrollback": 10000,
+
+  // NestJS Specific
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+
+  // Code Coverage
+  "coverage-gutters.showLineCoverage": true,
+  "coverage-gutters.showRulerCoverage": true,
+
+  // Path Intellisense
+  "path-intellisense.mappings": {
+    "@": "${workspaceFolder}/src"
+  },
+
+  // Jest
+  "jest.autoRun": "off",
+  "jest.showCoverageOnLoad": false,
+
+  // REST Client
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "baseUrl": "http://localhost:3000"
+    },
+    "local": {
+      "baseUrl": "http://localhost:3000"
+    },
+    "dev": {
+      "baseUrl": "https://dev-api.example.com"
+    },
+    "prod": {
+      "baseUrl": "https://api.example.com"
+    }
+  },
+
+  // Todo Tree
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "NOTE",
+    "BUG",
+    "HACK",
+    "XXX"
+  ],
+  "todo-tree.highlights.defaultHighlight": {
+    "icon": "alert",
+    "type": "text",
+    "foreground": "#fff",
+    "iconColour": "#ffcc00"
+  },
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "check",
+      "iconColour": "#3498db"
+    },
+    "FIXME": {
+      "icon": "flame",
+      "iconColour": "#e74c3c"
+    },
+    "NOTE": {
+      "icon": "note",
+      "iconColour": "#2ecc71"
+    },
+    "BUG": {
+      "icon": "bug",
+      "iconColour": "#e74c3c"
+    }
+  }
+}

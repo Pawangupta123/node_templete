@@ -1,0 +1,42 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, main-runner] # Self-hosted runner on GCP
+
+    strategy:
+      matrix:
+        node-version: [23.x] # Node.js version
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Set up environment file
+      - name: Set up Environment File
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          echo "${{ env.PROD_ENV_FILE }}" | sed 's/\\n/\n/g' > .env
+
+      # Build application
+      - name: Build Application
+        run: pnpm run build
+
+      # Start application
+      - name: Start Application
+        run: pm2 delete "nestjs-backend" || true && pm2 start pnpm --name "nestjs-backend" -- run start:prod

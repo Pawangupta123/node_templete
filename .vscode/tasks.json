@@ -1,0 +1,299 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Dev (SWC)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "start:swc"],
+      "problemMatcher": ["$tsc-watch"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build (SWC)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build:swc"],
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
+    },
+    {
+      "label": "Build (Production)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build"],
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
+    },
+    {
+      "label": "Start Production",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "start:prod"],
+      "problemMatcher": [],
+      "dependsOn": ["Build (Production)"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Run Tests (Watch)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test:watch"],
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Run Tests (Coverage)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test:cov"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Run E2E Tests",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test:e2e"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "lint"],
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Lint & Fix",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "lint", "--fix"],
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "format"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Type Check",
+      "type": "shell",
+      "command": "tsc",
+      "args": ["--noEmit"],
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "rm",
+      "args": ["-rf", "dist", "coverage"],
+      "windows": {
+        "command": "if exist dist rmdir /s /q dist && if exist coverage rmdir /s /q coverage"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Clean & Build",
+      "dependsOn": ["Clean", "Build (SWC)"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["install"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Update Dependencies",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["update"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Generate Module",
+      "type": "shell",
+      "command": "nest",
+      "args": ["generate", "module", "${input:moduleName}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Generate Controller",
+      "type": "shell",
+      "command": "nest",
+      "args": ["generate", "controller", "${input:controllerName}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Generate Service",
+      "type": "shell",
+      "command": "nest",
+      "args": ["generate", "service", "${input:serviceName}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Database Migration: Generate",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "typeorm",
+        "migration:generate",
+        "src/database/migrations/${input:migrationName}",
+        "-d",
+        "src/database/data-source.ts"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Database Migration: Run",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "typeorm",
+        "migration:run",
+        "-d",
+        "src/database/data-source.ts"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Database Migration: Revert",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "typeorm",
+        "migration:revert",
+        "-d",
+        "src/database/data-source.ts"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "moduleName",
+      "type": "promptString",
+      "description": "Module name"
+    },
+    {
+      "id": "controllerName",
+      "type": "promptString",
+      "description": "Controller name"
+    },
+    {
+      "id": "serviceName",
+      "type": "promptString",
+      "description": "Service name"
+    },
+    {
+      "id": "migrationName",
+      "type": "promptString",
+      "description": "Migration name"
+    }
+  ]
+}

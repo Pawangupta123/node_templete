@@ -1,0 +1,70 @@
+{
+  "recommendations": [
+    // Essential
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+
+    // NestJS Specific
+    "firsttris.vscode-jest-runner",
+    "orta.vscode-jest",
+
+    // TypeScript & JavaScript
+    "usernamehw.errorlens",
+    "yoavbls.pretty-ts-errors",
+    "streetsidesoftware.code-spell-checker",
+
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "donjayamanne.githistory",
+
+    // Database & API
+    "cweijan.vscode-database-client2",
+    "humao.rest-client",
+    "rangav.vscode-thunder-client",
+
+    // Productivity
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "wix.vscode-import-cost",
+    "steoates.autoimport",
+    "gruntfuggly.todo-tree",
+    "wayou.vscode-todo-highlight",
+
+    // Code Quality
+    "sonarsource.sonarlint-vscode",
+    "ryanluker.vscode-coverage-gutters",
+
+    // Documentation
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "bierner.markdown-mermaid",
+
+    // Environment
+    "mikestead.dotenv",
+    "irongeek.vscode-env",
+
+    // Utilities
+    "aaron-bond.better-comments",
+    "naumovs.color-highlight",
+    "eamodio.toggle-excluded-files",
+    "formulahendry.auto-rename-tag",
+    "formulahendry.auto-close-tag",
+
+    // Theme & Icons
+    "pkief.material-icon-theme",
+    "antfu.icons-carbon",
+
+    // Docker (if using)
+    "ms-azuretools.vscode-docker",
+
+    // REST/GraphQL
+    "42crunch.vscode-openapi",
+    "arjun.swagger-viewer"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify",
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}

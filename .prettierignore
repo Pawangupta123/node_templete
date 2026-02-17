@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.*
+
+# Build output
+out
+dist
+build
+
+# Cache
+.cache
+.turbo
+.eslintcache
+
+# Logs
+*.log
+
+# Environment
+.env*
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Other
+coverage
+.vercel
+*.tsbuildinfo

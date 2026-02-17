@@ -1,0 +1,56 @@
+# Automatically label PRs based on changed files
+
+'type: documentation':
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.md', 'docs/**/*']
+
+'type: dependencies':
+  - changed-files:
+    - any-glob-to-any-file: ['package.json', 'pnpm-lock.yaml']
+
+'area: core':
+  - changed-files:
+    - any-glob-to-any-file: ['src/core/**/*']
+
+'area: database':
+  - changed-files:
+    - any-glob-to-any-file: ['src/database/**/*', 'src/**/*.entity.ts']
+
+'area: api':
+  - changed-files:
+    - any-glob-to-any-file: ['src/**/*.controller.ts']
+
+'area: services':
+  - changed-files:
+    - any-glob-to-any-file: ['src/**/*.service.ts']
+
+'area: testing':
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.spec.ts', 'test/**/*', '**/*.test.ts']
+
+'area: config':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**/*'
+      - '.vscode/**/*'
+      - '*.config.js'
+      - '*.config.ts'
+      - 'tsconfig.json'
+      - 'nest-cli.json'
+      - '.swcrc'
+
+'size: small':
+  - changed-files:
+    - 1-10
+
+'size: medium':
+  - changed-files:
+    - 11-50
+
+'size: large':
+  - changed-files:
+    - 51-100
+
+'size: xl':
+  - changed-files:
+    - 101+
