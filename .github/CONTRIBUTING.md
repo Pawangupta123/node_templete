@@ -1,4 +1,4 @@
-# Contributing to NestJS Backend
+# Contributing to NodeJS Backend
 
 First off, thank you for considering contributing to NestJS Backend! It's people like you that make this project great.
 
