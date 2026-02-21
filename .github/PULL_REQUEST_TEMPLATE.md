@@ -38,7 +38,7 @@ Related to #
 ### Test Configuration
 
 - **Node version**:
-- **Database**:
+- **Database**: MongoDB
 - **Environment**:
 
 ### Test Steps
@@ -57,12 +57,21 @@ Related to #
 
 ### Code Quality
 
-- [ ] My code follows the project's code style guidelines
+- [ ] My code follows the project's code style guidelines (see CONTRIBUTING.md)
 - [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] Controllers are thin (5-10 lines per method, no try-catch)
+- [ ] Business logic is in services, not controllers
 - [ ] I have removed any console.logs and debugging code
 - [ ] My changes generate no new warnings or errors
-- [ ] I have checked for TypeScript errors (`tsc --noEmit`)
+- [ ] I have checked for TypeScript errors (`npm run typecheck`)
+- [ ] All files are under 300-400 lines
+
+### Response & Error Handling
+
+- [ ] Using `sendSuccess()` / `sendPaginated()` for responses (not raw `res.json()`)
+- [ ] Throwing custom errors (`NotFoundError`, `ConflictError`, etc.) instead of manual error responses
+- [ ] All routes use `catchAsync()` wrapper
+- [ ] Request body/query/params validated with `validate(ZodSchema)` middleware
 
 ### Testing
 
@@ -75,37 +84,38 @@ Related to #
 
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have updated the README.md (if needed)
-- [ ] I have added/updated JSDoc comments
-- [ ] I have updated the API documentation/Swagger (if applicable)
+- [ ] I have updated Swagger JSDoc comments on routes
+- [ ] I have updated CONTRIBUTING.md (if patterns changed)
 
-### Database & Migrations
+### Database & Models
 
-- [ ] I have created necessary database migrations
-- [ ] I have tested migrations up and down
-- [ ] I have updated the schema documentation (if applicable)
-- [ ] N/A - No database changes
+- [ ] Mongoose schemas have proper indexes for queried fields
+- [ ] Sensitive fields use `select: false` (passwords, tokens)
+- [ ] Transactions used where multiple writes must be atomic
+- [ ] N/A — No database changes
 
 ### Security
 
 - [ ] I have reviewed the code for security vulnerabilities
 - [ ] I have not exposed any sensitive information (API keys, passwords, etc.)
-- [ ] I have validated and sanitized user inputs
-- [ ] I have followed secure coding practices
+- [ ] User inputs validated with Zod schemas before DB operations
+- [ ] No raw `req.body` passed directly to MongoDB queries
+- [ ] Using `env.config` instead of `process.env` directly
 
 ### Performance
 
 - [ ] I have considered the performance impact of my changes
-- [ ] I have optimized database queries (if applicable)
-- [ ] I have added appropriate caching (if needed)
-- [ ] N/A - No performance concerns
+- [ ] No N+1 queries (no DB calls inside loops)
+- [ ] Using `Promise.all()` for parallel independent queries
+- [ ] Added appropriate Redis caching (if needed)
+- [ ] N/A — No performance concerns
 
 ## Deployment Notes
 
 <!-- Any special deployment considerations? -->
 
-- [ ] Requires database migration
 - [ ] Requires environment variable updates
-- [ ] Requires dependency installation
+- [ ] Requires dependency installation (`npm install`)
 - [ ] Requires server restart
 - [ ] No special deployment steps needed
 
@@ -116,14 +126,3 @@ Related to #
 ## Additional Notes
 
 <!-- Any additional information that reviewers should know -->
-
-## Reviewer Checklist
-
-<!-- For reviewers only -->
-
-- [ ] Code follows project conventions
-- [ ] Tests are adequate and passing
-- [ ] Documentation is updated
-- [ ] No security concerns
-- [ ] Performance is acceptable
-- [ ] Ready to merge

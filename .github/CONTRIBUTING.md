@@ -1,6 +1,6 @@
 # Contributing to NodeJS Backend
 
-First off, thank you for considering contributing to NestJS Backend! It's people like you that make this project great.
+First off, thank you for considering contributing! This guide covers the workflow. For **how to write code**, see [CONTRIBUTING.md](../CONTRIBUTING.md) in the project root.
 
 ## Table of Contents
 
@@ -22,8 +22,9 @@ This project and everyone participating in it is governed by our Code of Conduct
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 8+
-- PostgreSQL 16+
+- npm 10+
+- MongoDB 7+
+- Redis 7+
 - Git
 
 ### Setup
@@ -32,14 +33,14 @@ This project and everyone participating in it is governed by our Code of Conduct
 2. Clone your fork:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/NestJS-Backend.git
-   cd NestJS-Backend
+   git clone https://github.com/YOUR_USERNAME/nestjs-boilerplate.git
+   cd nestjs-boilerplate
    ```
 
 3. Install dependencies:
 
    ```bash
-   pnpm install
+   npm install
    ```
 
 4. Set up environment variables:
@@ -52,7 +53,7 @@ This project and everyone participating in it is governed by our Code of Conduct
 5. Run the development server:
 
    ```bash
-   pnpm run start:swc
+   npm run dev
    ```
 
 6. Create a new branch:
@@ -74,29 +75,26 @@ This project and everyone participating in it is governed by our Code of Conduct
 ### Development Commands
 
 ```bash
-# Start development server (fastest with SWC)
-pnpm run start:swc
+# Start development server (hot reload)
+npm run dev
 
 # Run tests
-pnpm run test
+npm test
 
 # Run tests in watch mode
-pnpm run test:watch
+npm run test:watch
 
 # Run E2E tests
-pnpm run test:e2e
+npm run test:e2e
 
 # Lint code
-pnpm run lint
-
-# Format code
-pnpm run format
+npm run lint
 
 # Type check
-tsc --noEmit
+npm run typecheck
 
 # Build for production
-pnpm run build
+npm run build
 ```
 
 ## Coding Standards
@@ -104,39 +102,30 @@ pnpm run build
 ### TypeScript
 
 - Use TypeScript for all new code
-- Enable strict mode in `tsconfig.json`
-- Avoid using `any` - use proper types or `unknown`
+- Strict mode is enabled in `tsconfig.json`
+- Avoid using `any` — use proper types or `unknown`
 - Use interfaces for object shapes
 - Use type aliases for unions and primitives
 
-### NestJS Conventions
+### Architecture Conventions
 
-- Follow NestJS architecture patterns
-- Use dependency injection
-- Keep controllers thin, services fat
-- Use DTOs for data validation
+- Follow modular architecture patterns (see [CONTRIBUTING.md](../CONTRIBUTING.md))
+- Keep controllers thin (5-10 lines per method)
+- Business logic goes in services
+- Use Zod DTOs for request validation
 - Use guards for authentication/authorization
-- Use interceptors for cross-cutting concerns
+- Use `catchAsync()` wrapper for all route handlers
 
 ### File Structure
 
 ```
-src/
-├── modules/
-│   └── user/
-│       ├── entities/
-│       │   └── user.entity.ts
-│       ├── dto/
-│       │   ├── create-user.dto.ts
-│       │   └── update-user.dto.ts
-│       ├── domain/
-│       │   └── user.domain.ts
-│       ├── presentation/
-│       │   └── admin/
-│       │       └── admin-user.presentation.ts
-│       ├── user.service.ts
-│       ├── user.controller.ts
-│       └── user.module.ts
+src/modules/{feature}/
+├── {feature}.routes.ts         ← Router + Swagger + validation middleware
+├── {feature}.controller.ts     ← Thin — req/res only
+├── {feature}.service.ts        ← All business logic
+├── {feature}.model.ts          ← Mongoose schema
+├── dto/                        ← Zod validation schemas
+└── index.ts                    ← Barrel export
 ```
 
 ### Code Style
@@ -150,78 +139,36 @@ We use ESLint and Prettier for code formatting. Your code must pass linting befo
 - Trailing commas in objects/arrays
 - Semicolons required
 - 120 character line length (soft limit)
+- LF line endings (auto-configured)
 
 ### Naming Conventions
 
-- **Classes**: PascalCase (e.g., `UserService`, `CreateUserDto`)
-- **Interfaces**: PascalCase with `I` prefix for custom interfaces (e.g., `IUserResponse`)
+- **Classes**: PascalCase (e.g., `UserService`, `AuthController`)
+- **Interfaces**: PascalCase with `I` prefix (e.g., `IUser`, `IPayment`)
 - **Functions/Methods**: camelCase (e.g., `getUserById`, `validateEmail`)
 - **Variables**: camelCase (e.g., `userEmail`, `isValid`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
-- **Files**: kebab-case (e.g., `user-service.ts`, `create-user.dto.ts`)
+- **Files**: dot-separated (e.g., `user.service.ts`, `create-user.dto.ts`)
 
 ### Comments
 
-- Use JSDoc for public APIs
 - Explain "why" not "what" in comments
 - Keep comments up-to-date with code changes
-
-```typescript
-/**
- * Creates a new user account with email verification
- * @param createUserDto - User registration data
- * @returns Created user entity
- * @throws ConflictException if email already exists
- */
-async createUser(createUserDto: CreateUserDto): Promise<User> {
-  // Implementation
-}
-```
+- Use JSDoc for service methods that aren't self-explanatory
 
 ## Commit Guidelines
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/).
+We follow a commit message convention — see [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) for full details.
 
-### Commit Message Format
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### Types
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `test`: Test additions/updates
-- `chore`: Maintenance tasks
-- `perf`: Performance improvements
-- `ci`: CI/CD changes
-
-### Examples
+### Quick Reference
 
 ```
-feat(user): add email verification
-
-Implement email verification using JWT tokens.
-Sends verification email on user registration.
-
-Closes #123
-```
-
-```
-fix(auth): prevent token expiration bug
-
-Fixed issue where tokens were expiring immediately
-after refresh due to incorrect timezone calculation.
-
-Fixes #456
+🔥 feat: Add user profile picture upload
+🐛 bug: Fix incorrect price calculation
+⚡ perf: Optimize dashboard aggregation query
+🧹 chore: Update dependencies
+📚 docs: Update API documentation
+♻️ refactor: Extract payment logic into service
 ```
 
 ## Pull Request Process
@@ -238,10 +185,9 @@ Fixes #456
 2. **Run all checks**:
 
    ```bash
-   pnpm run lint
-   pnpm run format
-   tsc --noEmit
-   pnpm run test
+   npm run lint
+   npm run typecheck
+   npm test
    ```
 
 3. **Commit your changes** following commit guidelines
@@ -256,7 +202,7 @@ Fixes #456
 
 6. **Fill out the PR template** completely
 
-7. **Wait for review** - Address any feedback
+7. **Wait for review** — Address any feedback
 
 8. **Squash and merge** once approved
 
@@ -264,39 +210,34 @@ Fixes #456
 
 - [ ] Code follows project style guidelines
 - [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
+- [ ] Controllers are thin (no try-catch, no validation logic)
+- [ ] Using `sendSuccess()` / `sendPaginated()` for responses
+- [ ] Zod validation on all request inputs
 - [ ] Tests added/updated
 - [ ] All tests passing
-- [ ] No TypeScript errors
+- [ ] No TypeScript errors (`npm run typecheck`)
 - [ ] No merge conflicts
-- [ ] Reviewed by at least one maintainer
+- [ ] Files under 300-400 lines
 
 ## Testing
 
 ### Unit Tests
 
-- Write tests for all business logic
+- Write tests for all business logic in services
 - Use Jest for testing
 - Aim for 80%+ code coverage
 - Test edge cases and error handling
 
 ```typescript
 describe('UserService', () => {
-  let service: UserService;
-
-  beforeEach(async () => {
-    const module = await Test.createTestingModule({
-      providers: [UserService],
-    }).compile();
-
-    service = module.get<UserService>(UserService);
+  it('should throw NotFoundError for invalid ID', async () => {
+    const service = new UserService();
+    await expect(service.findById('invalid-id')).rejects.toThrow(NotFoundError);
   });
 
-  it('should create a user', async () => {
-    const createUserDto = { email: 'test@example.com' };
-    const result = await service.create(createUserDto);
-    expect(result).toBeDefined();
+  it('should throw ConflictError for duplicate email', async () => {
+    const service = new UserService();
+    await expect(service.create({ email: 'existing@test.com' })).rejects.toThrow(ConflictError);
   });
 });
 ```
@@ -310,58 +251,57 @@ describe('UserService', () => {
 ### Running Tests
 
 ```bash
-# Unit tests
-pnpm run test
-
-# Watch mode
-pnpm run test:watch
-
-# Coverage
-pnpm run test:cov
-
-# E2E tests
-pnpm run test:e2e
+npm test             # Unit tests
+npm run test:watch   # Watch mode
+npm run test:cov     # Coverage
+npm run test:e2e     # E2E tests
 ```
 
 ## Documentation
 
 ### Code Documentation
 
-- Add JSDoc comments for public APIs
-- Document complex algorithms
+- Document complex business logic in services
 - Update README for new features
+- Update CONTRIBUTING.md if patterns change
 
 ### API Documentation
 
-- Update Swagger annotations
-- Document all endpoints
-- Include example requests/responses
+- Add Swagger JSDoc comments to route files
+- Document all endpoints with request/response examples
 
 ```typescript
-@ApiOperation({ summary: 'Create a new user' })
-@ApiResponse({ status: 201, description: 'User created successfully' })
-@ApiResponse({ status: 400, description: 'Bad request' })
-@Post()
-async create(@Body() createUserDto: CreateUserDto) {
-  return this.userService.create(createUserDto);
-}
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created
+ *       409:
+ *         description: Email already exists
+ */
+router.post('/', validate(CreateUserDto), catchAsync(UserController.create));
 ```
-
-### Changelog
-
-- Update CHANGELOG.md for significant changes
-- Follow Keep a Changelog format
 
 ## Questions?
 
 - Open an issue for bugs or feature requests
-- Join our Discord/Slack for discussions
 - Email the maintainers for private concerns
 
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's license.
-
----
-
-**Thank you for contributing! 🎉**

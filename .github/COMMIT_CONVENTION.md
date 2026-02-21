@@ -4,20 +4,20 @@ This project follows a commit message convention inspired by [Fiber](https://git
 
 ## Quick Reference
 
-| Emoji | Type | Description |
-|-------|------|-------------|
-| 🔥 | `feat` | New features |
-| 🐛 | `bug` | Bug fixes |
-| ⚡ | `perf` | Performance improvements |
-| 🧹 | `chore` | Maintenance, cleanup |
-| 📚 | `docs` | Documentation |
-| ♻️ | `refactor` | Code refactoring |
-| 🚨 | `hotfix` | Critical fixes |
-| ✅ | `test` | Tests |
-| 🔧 | `config` | Configuration |
-| 🗑️ | `remove` | Removing code/files |
-| 🚀 | `deploy` | Deployment |
-| 💄 | `style` | Code formatting |
+| Emoji | Type       | Description              |
+| ----- | ---------- | ------------------------ |
+| 🔥    | `feat`     | New features             |
+| 🐛    | `bug`      | Bug fixes                |
+| ⚡    | `perf`     | Performance improvements |
+| 🧹    | `chore`    | Maintenance, cleanup     |
+| 📚    | `docs`     | Documentation            |
+| ♻️    | `refactor` | Code refactoring         |
+| 🚨    | `hotfix`   | Critical fixes           |
+| ✅    | `test`     | Tests                    |
+| 🔧    | `config`   | Configuration            |
+| 🗑️    | `remove`   | Removing code/files      |
+| 🚀    | `deploy`   | Deployment               |
+| 💄    | `style`    | Code formatting          |
 
 ## Format
 
@@ -32,6 +32,7 @@ This project follows a commit message convention inspired by [Fiber](https://git
 ## Detailed Type Descriptions
 
 ### 🔥 feat - New Features
+
 Use when adding new functionality to the application.
 
 ```bash
@@ -41,6 +42,7 @@ Use when adding new functionality to the application.
 ```
 
 ### 🐛 bug - Bug Fixes
+
 Use when fixing a bug that affects users.
 
 ```bash
@@ -50,6 +52,7 @@ Use when fixing a bug that affects users.
 ```
 
 ### ⚡ perf - Performance Improvements
+
 Use when improving performance without changing functionality.
 
 ```bash
@@ -59,6 +62,7 @@ Use when improving performance without changing functionality.
 ```
 
 ### 🧹 chore - Maintenance
+
 Use for routine tasks, dependency updates, and cleanup.
 
 ```bash
@@ -68,6 +72,7 @@ Use for routine tasks, dependency updates, and cleanup.
 ```
 
 ### 📚 docs - Documentation
+
 Use when only documentation is changed.
 
 ```bash
@@ -77,6 +82,7 @@ Use when only documentation is changed.
 ```
 
 ### ♻️ refactor - Code Refactoring
+
 Use when restructuring code without changing behavior.
 
 ```bash
@@ -86,6 +92,7 @@ Use when restructuring code without changing behavior.
 ```
 
 ### 🚨 hotfix - Critical Fixes
+
 Use for urgent fixes that need immediate deployment.
 
 ```bash
@@ -95,6 +102,7 @@ Use for urgent fixes that need immediate deployment.
 ```
 
 ### ✅ test - Tests
+
 Use when adding or modifying tests.
 
 ```bash
@@ -104,15 +112,17 @@ Use when adding or modifying tests.
 ```
 
 ### 🔧 config - Configuration
+
 Use for configuration file changes.
 
 ```bash
-🔧 config: Update TypeORM migration settings
+🔧 config: Update MongoDB connection settings
 🔧 config: Add new environment variables
 🔧 config: Configure CI/CD pipeline
 ```
 
 ### 🗑️ remove - Removing Code
+
 Use when removing deprecated or unused code.
 
 ```bash
@@ -122,6 +132,7 @@ Use when removing deprecated or unused code.
 ```
 
 ### 🚀 deploy - Deployment
+
 Use for deployment-related changes.
 
 ```bash
@@ -131,6 +142,7 @@ Use for deployment-related changes.
 ```
 
 ### 💄 style - Code Style
+
 Use for formatting changes that don't affect logic.
 
 ```bash
@@ -212,12 +224,15 @@ git config commit.template .gitmessage
 ## Emoji Keyboard Shortcuts
 
 ### Windows
+
 - `Win + .` to open emoji picker
 
 ### macOS
+
 - `Cmd + Ctrl + Space` to open emoji picker
 
 ### VS Code
+
 - Install "Emoji" extension for quick insertion
 
 ## Examples from Real Commits
@@ -233,7 +248,7 @@ git config commit.template .gitmessage
 ⚡ perf: Reduce API response time by 40%
 
 # Chore with details
-🧹 chore: Upgrade NestJS from 9.x to 10.x
+🧹 chore: Upgrade Express from 4.x to 5.x
 
 # Docs update
 📚 docs: Add Swagger annotations to user endpoints

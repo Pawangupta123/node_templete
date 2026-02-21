@@ -6,51 +6,92 @@
 - **Framework:** Express.js
 - **Database:** MongoDB (Mongoose ODM)
 - **Cache/Queue:** Redis (IORedis) + BullMQ
-- **Logging:** Winston (console + file)
-- **Validation:** Zod (env + request)
+- **Logging:** Winston (console + file) + Morgan (HTTP)
+- **Validation:** Zod (env + request body/query/params)
 - **API Docs:** Swagger UI at `/api-docs`
 - **Security:** Helmet, CORS, Rate Limiting (Redis-backed)
+- **Error Handling:** Custom error classes + global error handler
 
 ## Project Structure
 
 ```
 src/
-├── main.ts                    Server bootstrap
-├── app.routes.ts              Central route aggregator
-├── api-docs.ts                Swagger setup
-├── config/                    All configurations
-│   ├── env.config.ts          Zod env validation
-│   ├── db.config.ts           MongoDB connection
-│   ├── redis.config.ts        Redis connection
-│   ├── cors.config.ts         CORS options
-│   ├── rate-limit.config.ts   Rate limiter
-│   ├── logger.config.ts       Winston logger
-│   └── bullmq.config.ts       Queue/Worker helpers
-├── common/                    Shared utilities
-│   ├── middleware/             Error handler
-│   ├── guards/                Auth guards
-│   └── decorators/            Custom decorators
-└── modules/                   Feature modules
-    └── health/                Example module
-        ├── index.ts
-        ├── health.routes.ts
-        ├── health.controller.ts
-        └── health.service.ts
+├── main.ts                        Server bootstrap + middleware chain
+├── app.routes.ts                  Central route aggregator
+├── api-docs.ts                    Swagger setup
+│
+├── config/                        All configurations
+│   ├── env.config.ts              Zod env validation (crash early)
+│   ├── db.config.ts               MongoDB connection
+│   ├── redis.config.ts            Redis connection (IORedis)
+│   ├── cors.config.ts             CORS options
+│   ├── rate-limit.config.ts       Rate limiter (Redis-backed)
+│   ├── logger.config.ts           Winston logger
+│   └── bullmq.config.ts           Queue/Worker factory
+│
+├── common/                        Shared utilities (har module use karega)
+│   ├── errors/                    Custom error classes
+│   │   └── index.ts               AppError, NotFound, Validation, Unauthorized, etc.
+│   ├── helpers/
+│   │   ├── response.helper.ts     sendSuccess(), sendError(), sendPaginated()
+│   │   ├── catch-async.ts         catchAsync() — no try-catch in controllers
+│   │   └── index.ts               Barrel export
+│   ├── validators/
+│   │   ├── validate.ts            Zod middleware factory — validate(Schema, 'body'|'query'|'params')
+│   │   └── index.ts
+│   ├── utils/
+│   │   ├── pagination.ts          paginate({ page, limit }) → { skip, limit, meta }
+│   │   ├── transaction.ts         withTransaction(async (session) => { ... })
+│   │   └── index.ts
+│   ├── events/
+│   │   └── event-bus.ts           EventBus — fire-and-forget in-process events
+│   ├── middleware/
+│   │   └── error-handler.ts       Global error handler + 404 handler
+│   ├── guards/                    Auth guards (RBAC)
+│   └── decorators/                Custom decorators
+│
+└── modules/                       Feature modules
+    └── health/                    Example module
+        ├── index.ts               Barrel export
+        ├── health.routes.ts       Router + Swagger JSDoc
+        ├── health.controller.ts   Thin — delegates to service
+        └── health.service.ts      Business logic
 ```
 
 ## Module Pattern
 
-Each feature follows this structure:
+Every feature follows this structure:
 
 ```
 src/modules/{feature}/
 ├── index.ts                 Barrel export
-├── {feature}.routes.ts      Router + Swagger JSDoc
-├── {feature}.controller.ts  Thin — req/res only
-├── {feature}.service.ts     Business logic
-├── {feature}.model.ts       Mongoose schema
-├── {feature}.validator.ts   Zod validation
-└── dto/                     Request/Response types
+├── {feature}.routes.ts      Router + Swagger JSDoc + validation middleware
+├── {feature}.controller.ts  Thin — req/res only, uses sendSuccess/sendError
+├── {feature}.service.ts     Business logic, throws custom errors
+├── {feature}.model.ts       Mongoose schema (TypeScript interfaces)
+├── dto/                     Zod validation schemas
+└── helpers/                 Module-specific utilities (if needed)
+```
+
+## Controller Pattern
+
+```ts
+// Routes — validation + error wrapping at route level
+router.post('/register', validate(RegisterDto), catchAsync(controller.register));
+
+// Controller — THIN, no try-catch, no validation
+static async register(req: Request, res: Response) {
+  const result = await authService.register(req.body);
+  sendSuccess(res, result, 'Registered', 201);
+}
+
+// Service — throws errors, error-handler catches them
+async register(dto: RegisterDtoType) {
+  if (await this.emailExists(dto.email)) {
+    throw new ConflictError('Email already registered');
+  }
+  // ...business logic
+}
 ```
 
 ## Getting Started
@@ -87,27 +128,47 @@ docker-compose logs -f
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server (nodemon + ts-node) |
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm start` | Run compiled app |
-| `npm run lint` | Lint + fix |
-| `npm run typecheck` | Type check without build |
-| `npm test` | Run tests |
-| `npm run test:e2e` | Run e2e tests |
+| Command             | Description                          |
+| ------------------- | ------------------------------------ |
+| `npm run dev`       | Start dev server (nodemon + ts-node) |
+| `npm run build`     | Compile TypeScript to `dist/`        |
+| `npm start`         | Run compiled app                     |
+| `npm run lint`      | Lint + fix                           |
+| `npm run typecheck` | Type check without build             |
+| `npm test`          | Run tests                            |
+| `npm run test:e2e`  | Run e2e tests                        |
+
+## API Response Format
+
+All endpoints follow the same response structure:
+
+```json
+// Success
+{ "success": true, "message": "User fetched", "data": { ... } }
+
+// Error
+{ "success": false, "message": "Validation failed", "errors": { "email": "Invalid email" } }
+
+// Paginated
+{ "success": true, "message": "Success", "data": [...], "pagination": { "page": 1, "limit": 20, "total": 150, "totalPages": 8 } }
+```
 
 ## Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /health` | Health check (MongoDB + Redis status) |
-| `GET /api-docs` | Swagger UI |
-| `GET /api/v1/*` | API routes |
+| Endpoint             | Description                           |
+| -------------------- | ------------------------------------- |
+| `GET /api/v1/health` | Health check (MongoDB + Redis status) |
+| `GET /api-docs`      | Swagger UI                            |
 
 ## Environment Variables
 
 See [.env.example](.env.example) for all available variables.
+
+## Documentation
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — How to write code in this project (must read for new devs)
+- [.github/COMMIT_CONVENTION.md](.github/COMMIT_CONVENTION.md) — Commit message format
+- [.github/SECURITY.md](.github/SECURITY.md) — Security policy
 
 ## License
 

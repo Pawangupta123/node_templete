@@ -11,7 +11,7 @@ We release patches for security vulnerabilities for the following versions:
 
 ## Reporting a Vulnerability
 
-We take the security of NestJS Backend seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of this project seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
 ### Please DO NOT
 
@@ -20,11 +20,11 @@ We take the security of NestJS Backend seriously. If you believe you have found 
 
 ### Please DO
 
-**Report security vulnerabilities via email to**: [security@nestjs.com]
+**Report security vulnerabilities via email to**: [INSERT CONTACT EMAIL]
 
 Please include the following information in your report:
 
-1. **Type of vulnerability** (e.g., SQL injection, XSS, authentication bypass)
+1. **Type of vulnerability** (e.g., NoSQL injection, XSS, authentication bypass)
 2. **Full paths of affected source files** (if known)
 3. **Location of the affected source code** (tag/branch/commit or direct URL)
 4. **Step-by-step instructions to reproduce** the vulnerability
@@ -50,13 +50,13 @@ Please include the following information in your report:
 
 2. **Input validation**
    - Always validate and sanitize user input
-   - Use DTOs with class-validator decorators
+   - Use Zod schemas with `validate()` middleware
    - Never trust client-side data
 
-3. **SQL Injection prevention**
-   - Use TypeORM query builders or prepared statements
-   - Never concatenate user input into SQL queries
-   - Use parameterized queries
+3. **NoSQL Injection prevention**
+   - Never pass raw `req.body` directly into MongoDB queries
+   - Use Zod to validate and parse input before DB operations
+   - Avoid `$where` and `$expr` with user input
 
 4. **Authentication & Authorization**
    - Implement proper JWT token validation
@@ -67,8 +67,8 @@ Please include the following information in your report:
 5. **Dependency management**
    - Keep dependencies up to date
    - Review Dependabot alerts
-   - Run `pnpm audit` regularly
-   - Use lock files (`pnpm-lock.yaml`)
+   - Run `npm audit` regularly
+   - Use lock files (`package-lock.json`)
 
 ### For Deployment
 
@@ -82,7 +82,7 @@ Please include the following information in your report:
    CORS_ORIGIN=https://your-domain.com
 
    # Use secure database credentials
-   DATABASE_URL=postgresql://user:password@host:5432/db?ssl=true
+   MONGODB_URL=mongodb+srv://user:password@cluster.mongodb.net/dbname
    ```
 
 2. **HTTPS Only**
@@ -96,12 +96,12 @@ Please include the following information in your report:
    - Use IP-based and user-based limits
 
 4. **Security Headers**
-   - Use Helmet.js for security headers
+   - Helmet.js is configured for security headers
    - Configure CSP appropriately
    - Enable HSTS
 
 5. **Monitoring & Logging**
-   - Log security events
+   - Winston logs security events to file
    - Monitor for suspicious activity
    - Set up alerts for critical events
    - Never log sensitive information (passwords, tokens)
@@ -110,23 +110,24 @@ Please include the following information in your report:
 
 ### Database
 
-- All database queries use TypeORM's query builder or repository methods
-- Parameterized queries prevent SQL injection
+- All database queries use Mongoose ODM methods
+- Zod validation prevents NoSQL injection by type-checking input
 - Database credentials stored in environment variables
+- Zod env validation crashes the app if required vars are missing
 
 ### Authentication
 
-- JWT tokens with expiration
-- Refresh token rotation
-- Password hashing with bcrypt (cost factor 10+)
-- Rate limiting on login attempts
+- JWT tokens with configurable expiration
+- Password hashing with bcrypt (cost factor 12+)
+- Rate limiting on login/register attempts
+- Sensitive fields excluded from responses (`select: false`)
 
 ### API Security
 
-- CORS configured for specific origins
+- CORS configured for specific origins (via `CORS_ORIGIN` env var)
 - Helmet.js for security headers
-- Request validation with class-validator
-- Rate limiting with @nestjs/throttler
+- Request validation with Zod middleware
+- Rate limiting with Redis-backed store (express-rate-limit)
 
 ## Security Updates
 
@@ -147,15 +148,12 @@ This project aims to comply with:
 ## Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [NestJS Security Best Practices](https://docs.nestjs.com/security/helmet)
+- [Express.js Security Best Practices](https://expressjs.com/en/advanced/best-practice-security.html)
 - [Node.js Security Checklist](https://github.com/goldbergyoni/nodebestpractices#6-security-best-practices)
+- [Mongoose Security](https://mongoosejs.com/docs/security.html)
 
 ## Hall of Fame
 
 We thank the following researchers for responsibly disclosing security vulnerabilities:
 
 <!-- Add security researchers who have reported vulnerabilities -->
-
----
-
-**Last Updated**: 2025-01-11
