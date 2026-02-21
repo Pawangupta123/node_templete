@@ -1,15 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { HealthService } from './health.service';
+import { sendSuccess } from '../../common/helpers';
 
 const healthService = new HealthService();
 
 export class HealthController {
-  static async check(_req: Request, res: Response, next: NextFunction) {
-    try {
-      const health = await healthService.getHealth();
-      res.json(health);
-    } catch (error) {
-      next(error);
-    }
+  static async check(_req: Request, res: Response) {
+    const health = await healthService.getHealth();
+    sendSuccess(res, health, 'Server is healthy');
   }
 }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { HealthController } from './health.controller';
+import { catchAsync } from '../../common/helpers';
 
 const router = Router();
 
@@ -13,6 +14,6 @@ const router = Router();
  *       200:
  *         description: Server is healthy
  */
-router.get('/health', HealthController.check);
+router.get('/health', catchAsync(HealthController.check));
 
 export default router;
