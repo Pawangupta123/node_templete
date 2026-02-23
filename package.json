@@ -2,7 +2,7 @@
   "name": "express-ts-boilerplate",
   "version": "1.0.0",
   "description": "Optimized Express + TypeScript + MongoDB boilerplate",
-  "author": "Satyam Lohiya",
+  "author": "Pawan Gupta",
   "private": true,
   "scripts": {
     "dev": "nodemon",

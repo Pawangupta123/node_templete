@@ -108,7 +108,7 @@
     "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE, SECURITY.md",
     "AGENTS.md": "CLAUDE.md, GEMINI.md",
     ".prettierrc": ".prettierignore, .editorconfig",
-    "commitlint.config.js": ".commitlintrc*, .husky",
+    "commitlint.config.js": ".commitlintrc*, .husky"
   },
 
   // Terminal Settings
@@ -164,14 +164,7 @@
   },
 
   // Todo Tree
-  "todo-tree.general.tags": [
-    "TODO",
-    "FIXME",
-    "NOTE",
-    "BUG",
-    "HACK",
-    "XXX"
-  ],
+  "todo-tree.general.tags": ["TODO", "FIXME", "NOTE", "BUG", "HACK", "XXX"],
   "todo-tree.highlights.defaultHighlight": {
     "icon": "alert",
     "type": "text",
@@ -195,5 +188,6 @@
       "icon": "bug",
       "iconColour": "#e74c3c"
     }
-  }
+  },
+  "cSpell.words": ["Pawan"]
 }
