@@ -60,20 +60,26 @@ src/
 
 ## Module Pattern
 
-Every feature follows this structure:
+Every feature follows this structure (5 layers — each has ONE job):
 
 ```
 src/modules/{feature}/
 ├── index.ts                 Barrel export
 ├── {feature}.routes.ts      Router + Swagger JSDoc + validation middleware
-├── {feature}.controller.ts  Thin — req/res only, uses sendSuccess/sendError
-├── {feature}.service.ts     Business logic, throws custom errors
+├── {feature}.controller.ts  Thin — req/res only (5-10 lines per method)
+├── {feature}.service.ts     Business logic ONLY (no DB queries)
+├── {feature}.repository.ts  Database queries ONLY (no business logic)
 ├── {feature}.model.ts       Mongoose schema (TypeScript interfaces)
 ├── dto/                     Zod validation schemas
-└── helpers/                 Module-specific utilities (if needed)
+└── helpers/                 Query builders, complex logic (if needed)
 ```
 
-## Controller Pattern
+## Architecture Flow
+
+```
+Route → Controller → Service → Repository → Model
+         (req/res)   (logic)    (DB query)   (schema)
+```
 
 ```ts
 // Routes — validation + error wrapping at route level
@@ -85,12 +91,17 @@ static async register(req: Request, res: Response) {
   sendSuccess(res, result, 'Registered', 201);
 }
 
-// Service — throws errors, error-handler catches them
+// Service — business logic only, uses repository for DB
 async register(dto: RegisterDtoType) {
-  if (await this.emailExists(dto.email)) {
-    throw new ConflictError('Email already registered');
-  }
-  // ...business logic
+  const exists = await this.authRepo.existsByEmail(dto.email);
+  if (exists) throw new ConflictError('Email already registered');
+  return this.authRepo.createUser(dto);
+}
+
+// Repository — database queries only
+async existsByEmail(email: string): Promise<boolean> {
+  const doc = await UserModel.exists({ email });
+  return doc !== null;
 }
 ```
 

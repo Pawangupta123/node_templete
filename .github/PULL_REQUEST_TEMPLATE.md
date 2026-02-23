@@ -59,8 +59,9 @@ Related to #
 
 - [ ] My code follows the project's code style guidelines (see CONTRIBUTING.md)
 - [ ] I have performed a self-review of my code
-- [ ] Controllers are thin (5-10 lines per method, no try-catch)
-- [ ] Business logic is in services, not controllers
+- [ ] Controllers are thin (5-10 lines per method, no try-catch, no DB queries)
+- [ ] Business logic is in services, not controllers (no Mongoose imports in service)
+- [ ] DB queries are in repositories, not services (no business logic in repository)
 - [ ] I have removed any console.logs and debugging code
 - [ ] My changes generate no new warnings or errors
 - [ ] I have checked for TypeScript errors (`npm run typecheck`)

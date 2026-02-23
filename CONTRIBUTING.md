@@ -8,7 +8,8 @@ This guide explains how everything works. Follow this and your code will be clea
 - [Creating a New Module](#creating-a-new-module)
 - [Routes — How to Define Endpoints](#routes--how-to-define-endpoints)
 - [Controllers — Thin, No Logic](#controllers--thin-no-logic)
-- [Services — All Business Logic](#services--all-business-logic)
+- [Services — Pure Business Logic](#services--pure-business-logic)
+- [Repositories — All Database Queries](#repositories--all-database-queries)
 - [Models — Mongoose Schemas](#models--mongoose-schemas)
 - [Validation — Zod DTOs](#validation--zod-dtos)
 - [Error Handling — Throw, Don't Catch](#error-handling--throw-dont-catch)
@@ -26,21 +27,36 @@ This guide explains how everything works. Follow this and your code will be clea
 ## Project Architecture
 
 ```
-Request → Route (validate) → Controller (thin) → Service (logic) → Model (DB)
+Request → Route (validate) → Controller (thin) → Service (logic) → Repository (DB) → Model (schema)
                                     ↓
                               Response (sendSuccess / sendError)
 
 Error at any point → Caught by catchAsync → errorHandler → JSON response
 ```
 
-**Key idea:** Each layer has ONE job. Don't mix them.
+**Key idea:** Each layer has ONE job. Don't mix them. (Principle: Single Responsibility, Separation of Concerns)
 
-| Layer          | Job                                    | Lines per method |
-| -------------- | -------------------------------------- | ---------------- |
-| **Route**      | URL mapping + validation middleware    | 1-3              |
-| **Controller** | Parse req, call service, send response | 5-10             |
-| **Service**    | Business logic, DB calls, throw errors | 10-50            |
-| **Model**      | Schema definition, indexes, methods    | —                |
+| Layer          | Job                                     | Knows about        | Lines per method |
+| -------------- | --------------------------------------- | ------------------ | ---------------- |
+| **Route**      | URL mapping + validation middleware     | Express Router     | 1-3              |
+| **Controller** | Parse req, call service, send response  | req, res, service  | 5-10             |
+| **Service**    | Business logic, decisions, flow control | repository, errors | 10-50            |
+| **Repository** | Database queries, caching               | Model, Redis       | 5-20             |
+| **Model**      | Schema definition, indexes, statics     | Mongoose           | —                |
+
+### Why 5 Layers?
+
+```
+Controller → "User create karna hai"
+Service    → "Pehle check karo email duplicate toh nahi, fir create karo"  (WHAT to do)
+Repository → "Plan.findOne({ email }), Plan.create(data)"                  (HOW to do in DB)
+```
+
+- **Service ko pata nahi** data MongoDB se aa raha hai ya Redis se — usse farak nahi padta
+- **Repository ko pata nahi** ye data kyun chahiye — wo bas query run karta hai
+- Agar kal caching add karni ho — sirf repository change, service untouched
+- Agar kal DB switch karni ho — sirf repository change, service untouched
+- Testing easy — repository mock karo, business logic independently test karo
 
 ---
 
@@ -52,14 +68,27 @@ Every feature lives in `src/modules/{feature}/`. Here's how to create one:
 
 ```
 src/modules/user/
-├── index.ts               ← Barrel export
-├── user.routes.ts         ← Endpoints
-├── user.controller.ts     ← Req/Res handling
-├── user.service.ts        ← Business logic
-├── user.model.ts          ← Mongoose schema
+├── index.ts                ← Barrel export
+├── user.routes.ts          ← Endpoints + Swagger JSDoc
+├── user.controller.ts      ← Req/Res handling (thin)
+├── user.service.ts         ← Business logic ONLY
+├── user.repository.ts      ← Database queries ONLY
+├── user.model.ts           ← Mongoose schema + types
 └── dto/
-    ├── create-user.dto.ts ← Zod validation schema
+    ├── create-user.dto.ts  ← Zod validation schema
     └── update-user.dto.ts
+```
+
+For big modules (300+ lines in any file), add a `helpers/` folder:
+
+```
+src/modules/record/
+├── record.service.ts
+├── record.repository.ts
+└── helpers/
+    ├── filter-builder.ts   ← Complex query filter construction
+    ├── search-builder.ts   ← Search query builder (ReDoS safe)
+    └── aggregation.ts      ← Heavy aggregation pipelines
 ```
 
 ### Step 2: Register in app.routes.ts
@@ -165,48 +194,55 @@ export class UserController {
 - **NO try-catch** — `catchAsync` handles it
 - **NO validation** — `validate()` middleware handles it
 - **NO business logic** — service handles it
+- **NO database queries** — service + repository handle it
 - **NO direct `res.json()`** — use `sendSuccess()` / `sendPaginated()`
 - Max **5-10 lines** per method
 
 ---
 
-## Services — All Business Logic
+## Services — Pure Business Logic
 
-Services contain all business logic. They throw errors when something goes wrong.
+Services contain ONLY business logic. They use repositories for all database access. They throw errors when something goes wrong. Services DO NOT import Mongoose models directly.
 
 ```ts
 // src/modules/user/user.service.ts
-import { UserModel } from './user.model';
+import { UserRepository } from './user.repository';
 import { NotFoundError, ConflictError } from '../../common/errors';
 import { paginate, PaginationOptions } from '../../common/utils';
+import { CreateUserDtoType } from './dto/create-user.dto';
 
 export class UserService {
+  constructor(private userRepo = new UserRepository()) {}
+
   async findAll(query: PaginationOptions) {
     const { skip, limit, meta } = paginate(query);
-    const [users, total] = await Promise.all([UserModel.find({ isActive: true }).skip(skip).limit(limit), UserModel.countDocuments({ isActive: true })]);
+    const [users, total] = await Promise.all([this.userRepo.findActive({ skip, limit }), this.userRepo.countActive()]);
     return { data: users, pagination: meta(total) };
   }
 
   async findById(id: string) {
-    const user = await UserModel.findById(id);
+    const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundError('User not found');
     return user;
   }
 
-  async create(data: { name: string; email: string }) {
-    const exists = await UserModel.exists({ email: data.email });
+  async create(data: CreateUserDtoType) {
+    // Business decision: check duplicate
+    const exists = await this.userRepo.existsByEmail(data.email);
     if (exists) throw new ConflictError('Email already registered');
-    return UserModel.create(data);
+
+    // Business decision: assign default role
+    return this.userRepo.create(data);
   }
 
-  async update(id: string, data: Partial<{ name: string; email: string }>) {
-    const user = await UserModel.findByIdAndUpdate(id, data, { new: true });
+  async update(id: string, data: Partial<CreateUserDtoType>) {
+    const user = await this.userRepo.updateById(id, data);
     if (!user) throw new NotFoundError('User not found');
     return user;
   }
 
   async delete(id: string) {
-    const user = await UserModel.findByIdAndDelete(id);
+    const user = await this.userRepo.deleteById(id);
     if (!user) throw new NotFoundError('User not found');
   }
 }
@@ -214,9 +250,132 @@ export class UserService {
 
 ### Rules:
 
-- **Throw specific errors** — `NotFoundError`, `ConflictError`, `ValidationError`, etc.
+- **Never import Mongoose models** — use repository
 - **Never import `req` or `res`** — services don't know about HTTP
+- **Throw specific errors** — `NotFoundError`, `ConflictError`, etc.
 - **Don't catch errors** unless you need to transform them
+- **Business logic only** — decisions, validations, calculations, flow control
+- Repository is injected via constructor (Dependency Inversion principle — easy to mock in tests)
+
+---
+
+## Repositories — All Database Queries
+
+Repositories are the ONLY place where Mongoose models are used. They handle all database reads, writes, and caching. Services call repositories — never Mongoose directly.
+
+```ts
+// src/modules/user/user.repository.ts
+import { UserModel, IUser } from './user.model';
+import { CreateUserDtoType } from './dto/create-user.dto';
+
+export class UserRepository {
+  async findById(id: string): Promise<IUser | null> {
+    return UserModel.findById(id);
+  }
+
+  async findActive(options: { skip: number; limit: number }): Promise<IUser[]> {
+    return UserModel.find({ isActive: true }).sort({ createdAt: -1 }).skip(options.skip).limit(options.limit);
+  }
+
+  async countActive(): Promise<number> {
+    return UserModel.countDocuments({ isActive: true });
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const doc = await UserModel.exists({ email });
+    return doc !== null;
+  }
+
+  async create(data: CreateUserDtoType): Promise<IUser> {
+    return UserModel.create(data);
+  }
+
+  async updateById(id: string, data: Partial<CreateUserDtoType>): Promise<IUser | null> {
+    return UserModel.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  }
+
+  async deleteById(id: string): Promise<IUser | null> {
+    return UserModel.findByIdAndDelete(id);
+  }
+}
+```
+
+### When to add caching (in repository, service doesn't change):
+
+```ts
+// user.repository.ts — with Redis caching
+import { redisClient } from '../../config/redis.config';
+
+export class UserRepository {
+  private CACHE_TTL = 300; // 5 minutes
+
+  async findById(id: string): Promise<IUser | null> {
+    // Check cache first
+    const cached = await redisClient.get(`user:${id}`);
+    if (cached) return JSON.parse(cached);
+
+    // Cache miss — query DB
+    const user = await UserModel.findById(id);
+    if (user) {
+      await redisClient.setex(`user:${id}`, this.CACHE_TTL, JSON.stringify(user));
+    }
+    return user;
+  }
+
+  async updateById(id: string, data: Partial<CreateUserDtoType>): Promise<IUser | null> {
+    const user = await UserModel.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    // Invalidate cache after update
+    await redisClient.del(`user:${id}`);
+    return user;
+  }
+}
+// Service ko pata bhi nahi caching ho rahi hai — clean separation
+```
+
+### Rules:
+
+- **Only file that imports Mongoose models** — no other file should
+- **No business logic** — just query and return
+- **One query per method** — keep methods focused
+- **Method names describe the query** — `findActive()`, `countByFormId()`, `existsByEmail()`
+- **Caching goes here** — service doesn't know about Redis cache
+- **Return raw data** — let service decide what to do with it
+
+### Repository for complex queries (helpers):
+
+When repository gets big (record module, form module), extract query builders:
+
+```ts
+// src/modules/record/helpers/filter-builder.ts
+export function buildRecordFilters(query: RecordQueryDto): FilterQuery<IRecord> {
+  const filters: FilterQuery<IRecord> = {};
+  if (query.status) filters.status = query.status;
+  if (query.search) {
+    // ReDoS safe — escape special regex characters
+    const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filters.title = { $regex: escaped, $options: 'i' };
+  }
+  if (query.dateFrom || query.dateTo) {
+    filters.createdAt = {};
+    if (query.dateFrom) filters.createdAt.$gte = new Date(query.dateFrom);
+    if (query.dateTo) filters.createdAt.$lte = new Date(query.dateTo);
+  }
+  return filters;
+}
+
+// src/modules/record/record.repository.ts
+import { buildRecordFilters } from './helpers/filter-builder';
+
+export class RecordRepository {
+  async findByForm(formId: string, query: RecordQueryDto, options: { skip: number; limit: number }) {
+    const filters = buildRecordFilters(query);
+    return RecordModel.find({ formId, ...filters })
+      .sort({ createdAt: -1 })
+      .skip(options.skip)
+      .limit(options.limit);
+  }
+}
+```
 
 ---
 
@@ -261,6 +420,7 @@ export const UserModel = mongoose.model<IUser>('User', UserSchema);
 - Use `select: false` for sensitive fields (passwords, tokens)
 - Use `trim: true` for string fields
 - Use `lowercase: true` for email
+- Models are ONLY imported in repository files
 
 ---
 
@@ -357,14 +517,13 @@ sendError(res, 'Something went wrong', 500);
 ## Pagination — List Endpoints
 
 ```ts
-import { paginate } from '../../common/utils';
-
+// In service — uses repository for DB calls
 async findAll(query: { page?: number; limit?: number }) {
   const { skip, limit, meta } = paginate(query);
 
   const [data, total] = await Promise.all([
-    UserModel.find().skip(skip).limit(limit),
-    UserModel.countDocuments(),
+    this.userRepo.findActive({ skip, limit }),
+    this.userRepo.countActive(),
   ]);
 
   return { data, pagination: meta(total) };
@@ -384,21 +543,23 @@ When multiple DB operations must succeed or fail together:
 ```ts
 import { withTransaction } from '../../common/utils';
 
+// In service
 async transferCredits(fromId: string, toId: string, amount: number) {
   return withTransaction(async (session) => {
-    await WalletModel.updateOne(
-      { userId: fromId },
-      { $inc: { balance: -amount } },
-      { session },
-    );
-    await WalletModel.updateOne(
-      { userId: toId },
-      { $inc: { balance: amount } },
-      { session },
-    );
+    await this.walletRepo.debit(fromId, amount, session);
+    await this.walletRepo.credit(toId, amount, session);
     return { fromId, toId, amount };
   });
   // If any operation fails, ALL are rolled back
+}
+
+// In repository — accept session parameter
+async debit(userId: string, amount: number, session?: ClientSession) {
+  return WalletModel.updateOne(
+    { userId },
+    { $inc: { balance: -amount } },
+    { session },
+  );
 }
 ```
 
@@ -415,8 +576,8 @@ import { eventBus } from '../../common/events/event-bus';
 
 // EMIT — in service, after the main operation is done
 async updateProfile(userId: string, data: UpdateProfileDto) {
-  const user = await UserModel.findByIdAndUpdate(userId, data, { new: true });
-  eventBus.emitAsync('user:updated', { userId });  // Non-blocking, response pehle jaata hai
+  const user = await this.userRepo.updateById(userId, data);
+  eventBus.emitAsync('user:updated', { userId });  // Non-blocking
   return user;
 }
 
@@ -445,6 +606,8 @@ eventBus.register('user:updated', async (payload) => {
 | Rate limiting (already configured)               | Data that changes every request |
 | Presigned S3 URLs                                |                                 |
 | BullMQ job queues                                |                                 |
+
+**Important:** Caching logic goes in the **repository**, not in the service. Service should not know whether data comes from Redis or MongoDB.
 
 ---
 
@@ -477,9 +640,19 @@ import { NotFoundError } from '../../common/errors';
 import { paginate } from '../../common/utils';
 
 // 5. Same module
-import { UserService } from './user.service';
-import { UserModel } from './user.model';
+import { UserRepository } from './user.repository';
+import { CreateUserDtoType } from './dto/create-user.dto';
 ```
+
+### Who imports what:
+
+| File              | Can import                          | CANNOT import              |
+| ----------------- | ----------------------------------- | -------------------------- |
+| **routes.ts**     | controller, validators, catchAsync  | service, repository, model |
+| **controller.ts** | service, response helpers           | repository, model          |
+| **service.ts**    | repository, errors, utils, eventBus | model, req, res            |
+| **repository.ts** | model, Redis client                 | service, controller, req   |
+| **model.ts**      | mongoose only                       | everything else            |
 
 ---
 
@@ -507,7 +680,53 @@ static async create(req: Request, res: Response) {
 }
 ```
 
-### 2. Inconsistent response format
+### 2. DB queries in service (bypassing repository)
+
+```ts
+// BAD — service directly uses Mongoose model
+async findById(id: string) {
+  const user = await UserModel.findById(id);  // Model imported in service!
+  if (!user) throw new NotFoundError();
+  return user;
+}
+
+// GOOD — service uses repository
+async findById(id: string) {
+  const user = await this.userRepo.findById(id);  // Repository handles DB
+  if (!user) throw new NotFoundError();
+  return user;
+}
+```
+
+### 3. Business logic in repository
+
+```ts
+// BAD — repository making business decisions
+async createUser(data: CreateUserDtoType) {
+  const exists = await UserModel.exists({ email: data.email });
+  if (exists) throw new ConflictError('Email taken');  // Business logic!
+  return UserModel.create(data);
+}
+
+// GOOD — repository just queries, service decides
+// repository
+async existsByEmail(email: string): Promise<boolean> {
+  const doc = await UserModel.exists({ email });
+  return doc !== null;
+}
+async create(data: CreateUserDtoType) {
+  return UserModel.create(data);
+}
+
+// service
+async create(data: CreateUserDtoType) {
+  const exists = await this.userRepo.existsByEmail(data.email);
+  if (exists) throw new ConflictError('Email taken');  // Decision in service
+  return this.userRepo.create(data);
+}
+```
+
+### 4. Inconsistent response format
 
 ```ts
 // BAD — every endpoint returns different shape
@@ -520,23 +739,7 @@ sendSuccess(res, user, 'User fetched');
 sendPaginated(res, users, pagination);
 ```
 
-### 3. Catching errors unnecessarily
-
-```ts
-// BAD — catching and re-throwing, catchAsync already does this
-try {
-  const user = await userService.findById(id);
-  sendSuccess(res, user);
-} catch (err) {
-  next(err);
-}
-
-// GOOD — let catchAsync handle errors
-const user = await userService.findById(id);
-sendSuccess(res, user);
-```
-
-### 4. Direct process.env access
+### 5. Direct process.env access
 
 ```ts
 // BAD — could be undefined, no type safety
@@ -547,29 +750,35 @@ import { env } from '../../config/env.config';
 const secret = env.JWT_SECRET;
 ```
 
-### 5. N+1 queries (loop mein DB call)
+### 6. N+1 queries (loop mein DB call)
 
 ```ts
 // BAD — 1 query per item = 100 items = 100 queries
-const forms = await FormModel.find({ userId });
+const forms = await this.formRepo.findByUser(userId);
 for (const form of forms) {
-  form.recordCount = await RecordModel.countDocuments({ formId: form._id });
+  form.recordCount = await this.recordRepo.countByForm(form._id);
 }
 
-// GOOD — single aggregation = 1 query
-const forms = await FormModel.aggregate([
-  { $match: { userId } },
-  {
-    $lookup: {
-      from: 'records',
-      localField: '_id',
-      foreignField: 'formId',
-      as: 'records',
-    },
-  },
-  { $addFields: { recordCount: { $size: '$records' } } },
-  { $project: { records: 0 } },
-]);
+// GOOD — single aggregation in repository = 1 query
+const forms = await this.formRepo.findByUserWithRecordCount(userId);
+```
+
+---
+
+## Layer Summary — Who Does What
+
+```
+┌─────────────────────────────────────────────────┐
+│  ROUTE          Validation + routing             │
+│  ↓                                               │
+│  CONTROLLER     req/res handling (5-10 lines)    │
+│  ↓                                               │
+│  SERVICE        Business logic + decisions       │
+│  ↓              (no DB, no HTTP awareness)       │
+│  REPOSITORY     Database queries + caching       │
+│  ↓              (no business logic)              │
+│  MODEL          Schema definition + indexes      │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -597,7 +806,7 @@ validate(ZodSchema, 'params')   // validates req.params
 // Pagination — in services
 const { skip, limit, meta } = paginate({ page: 1, limit: 20 });
 
-// Transaction — in services
+// Transaction — in services (repository methods accept session)
 await withTransaction(async (session) => { ... });
 
 // EventBus — in services

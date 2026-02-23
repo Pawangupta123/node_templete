@@ -111,7 +111,8 @@ npm run build
 
 - Follow modular architecture patterns (see [CONTRIBUTING.md](../CONTRIBUTING.md))
 - Keep controllers thin (5-10 lines per method)
-- Business logic goes in services
+- Business logic goes in services (NO DB queries in service)
+- Database queries go in repositories (NO business logic in repository)
 - Use Zod DTOs for request validation
 - Use guards for authentication/authorization
 - Use `catchAsync()` wrapper for all route handlers
@@ -122,7 +123,8 @@ npm run build
 src/modules/{feature}/
 ├── {feature}.routes.ts         ← Router + Swagger + validation middleware
 ├── {feature}.controller.ts     ← Thin — req/res only
-├── {feature}.service.ts        ← All business logic
+├── {feature}.service.ts        ← Business logic ONLY (no DB queries)
+├── {feature}.repository.ts     ← Database queries ONLY (no business logic)
 ├── {feature}.model.ts          ← Mongoose schema
 ├── dto/                        ← Zod validation schemas
 └── index.ts                    ← Barrel export
@@ -210,7 +212,9 @@ We follow a commit message convention — see [COMMIT_CONVENTION.md](./COMMIT_CO
 
 - [ ] Code follows project style guidelines
 - [ ] Self-review completed
-- [ ] Controllers are thin (no try-catch, no validation logic)
+- [ ] Controllers are thin (no try-catch, no validation, no DB queries)
+- [ ] Services have no Mongoose model imports (use repository)
+- [ ] Repositories have no business logic (just queries + caching)
 - [ ] Using `sendSuccess()` / `sendPaginated()` for responses
 - [ ] Zod validation on all request inputs
 - [ ] Tests added/updated

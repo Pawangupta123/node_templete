@@ -83,15 +83,20 @@ docker-compose logs -f       # View logs
 
 1. Create folder: `src/modules/{feature}/`
 2. Create files:
-   - `{feature}.routes.ts` — Endpoints
-   - `{feature}.controller.ts` — Req/Res (thin)
-   - `{feature}.service.ts` — Business logic
+   - `{feature}.routes.ts` — Endpoints + validation
+   - `{feature}.controller.ts` — Req/Res (thin, 5-10 lines)
+   - `{feature}.service.ts` — Business logic ONLY
+   - `{feature}.repository.ts` — DB queries ONLY
    - `{feature}.model.ts` — Mongoose schema
    - `dto/` — Zod validation schemas
    - `index.ts` — Barrel export
 3. Register in `src/app.routes.ts`
 
-### Module Pattern
+### Module Pattern (5 Layers)
+
+```
+Route → Controller → Service → Repository → Model
+```
 
 ```ts
 // Routes — validate + catchAsync
@@ -103,10 +108,16 @@ static async create(req: Request, res: Response) {
   sendSuccess(res, result, 'Created', 201);
 }
 
-// Service — throw errors
+// Service — business logic, uses repository
 async create(data: CreateDtoType) {
-  if (await this.exists(data.email)) throw new ConflictError('Email taken');
-  return Model.create(data);
+  if (await this.repo.existsByEmail(data.email)) throw new ConflictError('Email taken');
+  return this.repo.create(data);
+}
+
+// Repository — DB queries only
+async existsByEmail(email: string): Promise<boolean> {
+  const doc = await Model.exists({ email });
+  return doc !== null;
 }
 ```
 
